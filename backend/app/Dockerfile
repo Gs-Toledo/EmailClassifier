@@ -6,7 +6,7 @@ RUN pip install uv
 
 COPY pyproject.toml ./
 
-RUN uv pip install --system .
+RUN uv pip sync pyproject.toml
 
 COPY ./app /app/app
 COPY .env /app/.env
@@ -14,4 +14,4 @@ COPY .env /app/.env
 EXPOSE 8000
 
 # host 0.0.0.0 para que a porta seja acessível de fora do contêiner
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
