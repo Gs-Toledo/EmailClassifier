@@ -12,9 +12,9 @@
 
 <script setup lang="ts">
 import { defineAsyncComponent, ref } from 'vue'
-import axios from 'axios'
 import LoadingSpinner from '@/components/base/LoadingSpinner.vue'
 import HomeHeader from '@/components/emailClassification/HomeHeader.vue'
+import ApiService from '@/services/ApiService'
 import type { EmailClassificationResult } from '@/@types/EmailClassificationResult'
 
 const EmailClassifierForm = defineAsyncComponent({
@@ -27,23 +27,28 @@ const ClassificationResult = defineAsyncComponent({
   loadingComponent: LoadingSpinner,
 })
 
-const result = ref(null)
+const result = ref<EmailClassificationResult | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
-async function handleClassificationRequest(formData: EmailClassificationResult) {
+async function handleClassificationRequest(formData: FormData) {
   isLoading.value = true
   error.value = null
   result.value = null
 
   try {
-    const response = await axios.post('http://localhost:8000/api/classify', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    result.value = response.data
-  } catch (err) {
-    console.error('Falha ao classificar o email:', err)
-    error.value = 'Ocorreu um erro ao se comunicar com o servidor. Tente novamente.'
+    const responseData = await ApiService.classifyEmail(formData)
+
+    if (import.meta.env.MODE !== 'production') {
+      console.log('Resposta do classificador: ', responseData)
+    }
+    result.value = responseData
+  } catch (erro) {
+    if (erro instanceof Error) {
+      error.value = erro.message
+    } else {
+      error.value = 'Ocorreu um erro inesperado.'
+    }
   } finally {
     isLoading.value = false
   }

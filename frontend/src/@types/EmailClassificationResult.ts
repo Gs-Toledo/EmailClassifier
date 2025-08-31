@@ -1,5 +1,5 @@
 export interface EmailClassificationResult {
-  filename: string
-  classification: "Produtivo" | "Improdutivo"
+  filename: string | null
+  classification: "Produtivo" | "Improdutivo" /* | string */
   suggested_reply: string
 }

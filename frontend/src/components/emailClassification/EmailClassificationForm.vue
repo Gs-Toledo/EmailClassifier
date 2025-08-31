@@ -13,8 +13,8 @@
             v-model="emailText"
             id="email-text"
             rows="8"
-            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="  Prezado(a)..."
+            class="mt-1 ps-2 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="Prezado(a)..."
           ></textarea>
         </div>
         <div class="relative">
