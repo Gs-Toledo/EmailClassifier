@@ -2,7 +2,34 @@
   <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg">
     <form @submit.prevent="handleSubmit">
       <div class="space-y-6">
-        <div>
+        <div class="flex rounded-md shadow-sm border border-gray-300 dark:border-gray-600">
+          <button
+            type="button"
+            @click="handleInputMethodChange('text')"
+            :class="{
+              'bg-indigo-600 text-white hover:bg-indigo-700': inputMethod === 'text',
+              'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600':
+                inputMethod !== 'text',
+            }"
+            class="flex-1 px-4 py-2 text-sm font-medium cursor-pointer rounded-l-md transition-colors duration-200"
+          >
+            Escrever Texto
+          </button>
+          <button
+            type="button"
+            @click="handleInputMethodChange('file')"
+            :class="{
+              'bg-indigo-600 text-white hover:bg-indigo-700': inputMethod === 'file',
+              'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600':
+                inputMethod !== 'file',
+            }"
+            class="flex-1 px-4 py-2 text-sm font-medium cursor-pointer rounded-r-md transition-colors duration-200"
+          >
+            Enviar Arquivo
+          </button>
+        </div>
+
+        <div v-if="inputMethod === 'text'">
           <label
             for="email-text"
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -17,17 +44,8 @@
             placeholder="Prezado(a)..."
           ></textarea>
         </div>
-        <div class="relative">
-          <div class="absolute inset-0 flex items-center" aria-hidden="true">
-            <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
-          </div>
-          <div class="relative flex justify-center">
-            <span class="bg-white dark:bg-gray-800 px-2 text-sm text-gray-500 dark:text-gray-400"
-              >OU</span
-            >
-          </div>
-        </div>
-        <div>
+
+        <div v-else-if="inputMethod === 'file'">
           <label
             for="file-upload"
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -76,14 +94,16 @@
           </div>
         </div>
       </div>
+
       <div v-if="internalError" class="mt-4 text-sm text-red-600">
         {{ internalError }}
       </div>
-      <div class="mt-8">
+
+      <div class="mt-8 flex gap-4">
         <button
           type="submit"
           :disabled="isLoading"
-          class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed"
+          class="flex-1 flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 cursor-pointer disabled:cursor-not-allowed"
         >
           <span v-if="!isLoading">Classificar E-mail</span>
           <span v-else class="flex items-center">
@@ -110,6 +130,15 @@
             Processando...
           </span>
         </button>
+
+        <button
+          type="button"
+          @click="clearInputs"
+          :disabled="isLoading"
+          class="flex-none w-auto py-3 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+        >
+          Limpar Campos
+        </button>
       </div>
     </form>
   </div>
@@ -125,33 +154,56 @@ defineProps({
   },
 })
 
-const emit = defineEmits(['classify'])
+const emit = defineEmits(['classify', 'clear'])
 
 const emailText = ref('')
 const emailFile = ref<File | null>(null)
 const internalError = ref<string | null>(null)
 
+const inputMethod = ref<'text' | 'file'>('text')
+
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement
-  if (target.files) {
+  if (target.files && target.files.length > 0) {
     emailFile.value = target.files[0]
-  }
-  if (emailFile.value) {
     internalError.value = null
   }
 }
 
+function handleInputMethodChange(method: 'text' | 'file') {
+  inputMethod.value = method
+  if (method === 'text') {
+    emailFile.value = null
+  } else {
+    emailText.value = ''
+  }
+  internalError.value = null
+}
+
 function handleSubmit() {
-  if (!emailText.value && !emailFile.value) {
-    internalError.value = 'Por favor, insira um texto ou selecione um arquivo.'
+  if (inputMethod.value === 'text' && !emailText.value.trim()) {
+    internalError.value = 'Por favor, insira o texto do e-mail.'
+    return
+  }
+  if (inputMethod.value === 'file' && !emailFile.value) {
+    internalError.value = 'Por favor, selecione um arquivo.'
     return
   }
   internalError.value = null
 
   const formData = new FormData()
-  if (emailText.value) formData.append('email_text', emailText.value)
-  if (emailFile.value) formData.append('email_file', emailFile.value)
+  if (inputMethod.value === 'text') {
+    formData.append('email_text', emailText.value)
+  } else if (inputMethod.value === 'file' && emailFile.value) {
+    formData.append('email_file', emailFile.value)
+  }
 
   emit('classify', formData)
+}
+
+function clearInputs() {
+  emailText.value = ''
+  emailFile.value = null
+  internalError.value = null
 }
 </script>
