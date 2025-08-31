@@ -9,7 +9,6 @@ COPY pyproject.toml ./
 RUN uv pip sync pyproject.toml
 
 COPY ./app /app/app
-COPY .env /app/.env
 
 EXPOSE 8000
 
