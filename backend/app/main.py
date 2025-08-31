@@ -9,6 +9,7 @@ app = FastAPI(title="API Email Classifier com IA")
 origins = [
     "http://localhost:5173",  # frontend
     "http://127.0.0.1:5173",
+    "https://email-classifier.vercel.app"
 ]
 
 app.add_middleware(
