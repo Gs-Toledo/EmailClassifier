@@ -1,9 +1,9 @@
-import time
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from .schemas import ClassificationResponse
+from .services import extractor, classifier
 
-app = FastAPI()
+app = FastAPI(title="API Email Classifier com IA")
 
 # Configuração do CORS
 origins = [
@@ -35,22 +35,41 @@ async def classify_email(
     e retorna uma classificação mockada.
     """
 
-    # Fluxo da LLM ainda não implementada, sleep para testar
-    time.sleep(2)
-
     if not email_file and not email_text:
         return {"error": "Nenhum arquivo ou texto foi enviado."}
 
-    # Mock
-    if email_file and "fatura" in email_file.filename.lower():
+    text_to_process = ""
+    filename = None
+
+    try:
+        if email_file:
+            filename = email_file.filename
+            text_to_process = await extractor.extract_text_from_file(email_file) # noqa
+        elif email_text:
+            filename = "Texto Direto"
+            text_to_process = email_text
+
+        if not text_to_process.strip():
+            raise HTTPException(
+                status_code=400, detail="O conteúdo do e-mail está vazio."
+            )
+
+        analysis_result = await classifier.classify_email_with_gemini(text_to_process) # noqa
+
         return ClassificationResponse(
-            filename=email_file.filename,
-            classification="Produtivo",
-            suggested_reply="Prezados, recebemos a fatura. O pagamento será processado em breve. Atenciosamente.",  # noqa
+            filename=filename,
+            classification=analysis_result.get("classification", "Erro"),
+            suggested_reply=analysis_result.get(
+                "suggested_reply", "Não foi possível sugerir uma resposta."
+            ),
         )
-    else:
-        return ClassificationResponse(
-            filename=email_file.filename if email_file else "Texto Direto",
-            classification="Improdutivo",
-            suggested_reply="Agradecemos o contato. Arquivaremos esta mensagem para referência futura.",  # noqa
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except ConnectionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        print(f"Erro inesperado no endpoint: {e}")
+        raise HTTPException(
+            status_code=500, detail="Ocorreu um erro interno no servidor."
         )

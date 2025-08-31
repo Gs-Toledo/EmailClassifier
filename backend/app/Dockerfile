@@ -1,20 +1,15 @@
 FROM python:3.12-slim
 
-# diretório de trabalho dentro do contêiner
 WORKDIR /app
 
-# Define variaveis de ambiente para otimização do Python
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+RUN pip install uv
 
-RUN pip install --no-cache-dir uv
+COPY pyproject.toml ./
 
-COPY pyproject.toml uv.lock ./
-
-# instala dependências
-RUN uv pip install --system --frozen
+RUN uv pip install --system .
 
 COPY ./app /app/app
+COPY .env /app/.env
 
 EXPOSE 8000
 
