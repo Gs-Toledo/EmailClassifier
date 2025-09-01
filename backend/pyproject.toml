@@ -11,7 +11,10 @@ dependencies = [
     "pymupdf", 
     "google-generativeai",
     "python-dotenv",
-    "click"
+    "click", 
+    "h11",   
+    "uvloop", 
+    "watchfiles"
 ]
 
 [project.optional-dependencies]
