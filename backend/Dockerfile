@@ -6,7 +6,7 @@ RUN pip install uv
 
 COPY pyproject.toml ./
 
-RUN uv pip sync pyproject.toml
+RUN uv pip sync --system pyproject.toml
 
 COPY ./app /app/app
 
