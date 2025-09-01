@@ -1,14 +1,10 @@
-FROM python:3.12
+FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN pip install uv
+COPY . .
 
-COPY pyproject.toml ./
-
-RUN uv pip sync --system pyproject.toml
-
-COPY ./app /app/app
+RUN pip install
 
 EXPOSE 8000
 
